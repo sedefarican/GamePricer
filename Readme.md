@@ -4,7 +4,7 @@
 
 ## Proje Hakkında
 
-![Ürün Tanıtım Görseli](proje_resmi.png)
+![Ürün Tanıtım Görseli](assets/proje_resmi.png)
 
 **Proje Tanımı:** 
 GamePricer isimli platformumuz, oyun tutkunlarının aradıkları oyunlara en hızlı ve en ekonomik şekilde ulaşmalarını sağlamak amacıyla tasarlandı. Geniş oyun veritabanımız ve güncel fiyat takip sistemimiz sayesinde, kullanıcılarımıza Steam ve Epic Games gibi farklı mecralardaki seçenekleri tek bir ekranda karşılaştırma imkanı sunuyoruz. Kullanıcı dostu arayüzümüz ile oyun severler, sadece fiyat takibi yapmakla kalmayıp, oyunlar hakkında detaylı bilgilere, sistem gereksinimlerine ve yüksek kaliteli görsellere saniyeler içinde ulaşabiliyorlar.
@@ -15,15 +15,17 @@ Platformumuzun kalbinde yer alan dinamik topluluk alanı sayesinde, her oyun say
 Fiyat Karşılaştırma Platformu
 
 **Referans Uygulama:** 
+
 [oyunfiyatlari.com](https://www.oyunfiyatlari.com/)
+
 [isthereanydeal.com](https://isthereanydeal.com/)
 
 ---
 
 ## Proje Linkleri
 
-- **REST API Adresi:** [api.yazmuh.com](https://api.yazmuh.com)
-- **Web Frontend Adresi:** [frontend.yazmuh.com](https://frontend.yazmuh.com)
+- **REST API Adresi:** Burası ilerleyen süreçte doldurulacaktır. 
+- **Web Frontend Adresi:** Burası ilerleyen süreçte doldurulacaktır. 
 
 ---
 
