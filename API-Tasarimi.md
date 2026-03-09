@@ -1,438 +1,666 @@
 # API Tasarımı - OpenAPI Specification Örneği
 
-**OpenAPI Spesifikasyon Dosyası:** [lamine.yaml](lamine.yaml)
+**OpenAPI Spesifikasyon Dosyası:** [gamepricer-api.yaml](gamepricer-api.yaml)
 
-Bu doküman, OpenAPI Specification (OAS) 3.0 standardına göre hazırlanmış örnek bir API tasarımını içermektedir.
+Bu doküman, OpenAPI Specification (OAS) 3.0 standardına göre hazırlanmış GamerPricer projesinin API tasarımını içermektedir.
 
 ## OpenAPI Specification
 
 ```yaml
 openapi: 3.0.3
-info:
-  title: E-Ticaret API
-  description: |
-    E-ticaret platformu için RESTful API.
-    
-    ## Özellikler
-    - Kullanıcı yönetimi
-    - Ürün katalog yönetimi
-    - Sipariş işlemleri
-    - JWT tabanlı kimlik doğrulama
-  version: 1.0.0
-  contact:
-    name: API Destek Ekibi
-    email: api-support@yazmuh.com
-    url: https://api.yazmuh.com/support
-  license:
-    name: MIT
-    url: https://opensource.org/licenses/MIT
 
+info:
+  title: GamePricer API
+  version: 1.0.0
+  description: >
+    GamePricer API, popüler oyunları listelemek, oyun detaylarını görüntülemek,
+    oyun aramak, kullanıcı hesap işlemlerini yönetmek, favori listesi oluşturmak
+    ve oyunlara yorum yapılmasını sağlamak amacıyla tasarlanmış bir RESTful servistir.
+    API, JWT tabanlı kimlik doğrulama mekanizmasını desteklemektedir.
+  contact:
+    name: Sedef Arıcan
+    email: l2211012035@ogr.sdu.edu.tr
+
+# Not: Aşağıdaki sunucu adresleri örnek olarak eklenmiştir, proje tamamlandığında güncellenecektir.
 servers:
-  - url: https://api.yazmuh.com/v1
-    description: Production server
-  - url: https://staging-api.yazmuh.com/v1
-    description: Staging server
-  - url: http://localhost:3000/v1
-    description: Development server
+  - url: https://api.gamepricer.com
+    description: Üretim sunucusu (Production)
+  - url: https://staging-api.gamepricer.com
+    description: Test sunucusu (Staging)
+  - url: http://localhost:3000
+    description: Yerel geliştirme sunucusu (Development)
 
 tags:
-  - name: users
-    description: Kullanıcı yönetimi işlemleri
-  - name: products
-    description: Ürün katalog işlemleri
-  - name: orders
-    description: Sipariş işlemleri
-  - name: auth
-    description: Kimlik doğrulama işlemleri
+  - name: Auth
+    description: Kayıt, giriş, çıkış ve şifre işlemleri
+  - name: Games
+    description: Oyun listeleme, arama ve oyun detay işlemleri
+  - name: Favorites
+    description: Kullanıcının favori oyunlarını yönetme işlemleri
+  - name: Comments
+    description: Oyun yorumları ve yorum beğeni işlemleri
+  - name: Users
+    description: Kullanıcı profil yönetimi işlemleri
 
 paths:
+  /games/popular:
+    get:
+      tags:
+        - Games
+      summary: Popüler oyunları listele
+      operationId: listPopularGames
+      parameters:
+        - name: page
+          in: query
+          required: false
+          description: Sayfa numarası
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          example: 1
+        - name: limit
+          in: query
+          required: false
+          description: Sayfa başına görüntülenecek oyun sayısı
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+          example: 10
+      responses:
+        "200":
+          description: Popüler oyunlar başarıyla listelendi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GameListResponse"
+        "400":
+          description: Geçersiz sorgu parametreleri
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /games/{gameId}:
+    parameters:
+      - name: gameId
+        in: path
+        required: true
+        description: Oyunun benzersiz kimlik numarası
+        schema:
+          type: string
+        example: "game123"
+    get:
+      tags:
+        - Games
+      summary: Oyun detayını getir
+      operationId: getGameDetail
+      responses:
+        "200":
+          description: Oyun detayı başarıyla getirildi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GameDetail"
+        "404":
+          description: Oyun bulunamadı
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /games/search:
+    get:
+      tags:
+        - Games
+      summary: Oyun ara
+      operationId: searchGames
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: Arama metni
+          schema:
+            type: string
+            minLength: 1
+          example: "witcher"
+        - name: page
+          in: query
+          required: false
+          description: Sayfa numarası
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          example: 1
+        - name: limit
+          in: query
+          required: false
+          description: Sayfa başına sonuç sayısı
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+          example: 10
+      responses:
+        "200":
+          description: Arama sonuçları başarıyla listelendi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GameListResponse"
+        "400":
+          description: Geçersiz arama parametreleri
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /auth/register:
     post:
       tags:
-        - auth
-      summary: Yeni kullanıcı kaydı
-      description: Sisteme yeni bir kullanıcı kaydeder
+        - Auth
+      summary: Üye ol
       operationId: registerUser
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UserRegistration'
-            examples:
-              example1:
-                summary: Örnek kullanıcı kaydı
-                value:
-                  email: kullanici@example.com
-                  password: Guvenli123!
-                  firstName: Ahmet
-                  lastName: Yılmaz
+              $ref: "#/components/schemas/RegisterRequest"
       responses:
-        '201':
+        "201":
           description: Kullanıcı başarıyla oluşturuldu
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '409':
-          description: Email adresi zaten kullanımda
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Geçersiz kayıt bilgileri
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Email zaten kullanımda
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /auth/login:
     post:
       tags:
-        - auth
-      summary: Kullanıcı girişi
-      description: Email ve şifre ile giriş yapar, JWT token döner
+        - Auth
+      summary: Giriş yap
       operationId: loginUser
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LoginCredentials'
+              $ref: "#/components/schemas/LoginRequest"
       responses:
-        '200':
+        "200":
           description: Giriş başarılı
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthToken'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
-  /users:
-    get:
-      tags:
-        - users
-      summary: Kullanıcı listesi
-      description: Sistemdeki tüm kullanıcıları listeler (sayfalama ile)
-      operationId: listUsers
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/LimitParam'
-        - name: role
-          in: query
-          description: Kullanıcı rolüne göre filtrele
-          schema:
-            type: string
-            enum: [admin, user, guest]
-      responses:
-        '200':
-          description: Başarılı
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Geçersiz giriş isteği
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserList'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Email veya şifre hatalı
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/forgot-password:
+    post:
+      tags:
+        - Auth
+      summary: Şifre sıfırlama talebi oluştur
+      operationId: forgotPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ForgotPasswordRequest"
+      responses:
+        "200":
+          description: Şifre sıfırlama bağlantısı başarıyla gönderildi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "400":
+          description: Geçersiz email bilgisi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      tags:
+        - Auth
+      summary: Çıkış yap
+      operationId: logoutUser
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Çıkış işlemi başarılı
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "401":
+          description: Kimlik doğrulama başarısız
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /users/{userId}:
-    get:
-      tags:
-        - users
-      summary: Kullanıcı detayı
-      description: Belirli bir kullanıcının detay bilgilerini getirir
-      operationId: getUserById
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/UserIdParam'
-      responses:
-        '200':
-          description: Başarılı
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-    
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        description: Kullanıcının benzersiz kimlik numarası
+        schema:
+          type: string
+        example: "user123"
     put:
       tags:
-        - users
-      summary: Kullanıcı güncelle
-      description: Kullanıcı bilgilerini günceller
+        - Users
+      summary: Kullanıcı hesabını güncelle
       operationId: updateUser
       security:
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/UserIdParam'
+        - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UserUpdate'
+              $ref: "#/components/schemas/UpdateUserRequest"
       responses:
-        '200':
-          description: Kullanıcı başarıyla güncellendi
+        "200":
+          description: Kullanıcı bilgileri başarıyla güncellendi
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-    
+                $ref: "#/components/schemas/User"
+        "400":
+          description: Geçersiz güncelleme verisi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Kimlik doğrulama başarısız
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Bu kullanıcıyı güncelleme yetkiniz yok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Kullanıcı bulunamadı
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
     delete:
       tags:
-        - users
-      summary: Kullanıcı sil
-      description: Kullanıcıyı sistemden siler
+        - Users
+      summary: Kullanıcı hesabını sil
       operationId: deleteUser
       security:
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/UserIdParam'
+        - BearerAuth: []
       responses:
-        '204':
-          description: Kullanıcı başarıyla silindi
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /products:
-    get:
-      tags:
-        - products
-      summary: Ürün listesi
-      description: Tüm ürünleri listeler
-      operationId: listProducts
-      parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/LimitParam'
-        - name: category
-          in: query
-          description: Kategoriye göre filtrele
-          schema:
-            type: string
-        - name: minPrice
-          in: query
-          description: Minimum fiyat
-          schema:
-            type: number
-            format: float
-        - name: maxPrice
-          in: query
-          description: Maximum fiyat
-          schema:
-            type: number
-            format: float
-      responses:
-        '200':
-          description: Başarılı
+        "204":
+          description: Kullanıcı hesabı başarıyla silindi
+        "401":
+          description: Kimlik doğrulama başarısız
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProductList'
-    
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Bu kullanıcıyı silme yetkiniz yok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Kullanıcı bulunamadı
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /favorites:
+    get:
+      tags:
+        - Favorites
+      summary: Favorileri listele
+      operationId: listFavorites
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Favori oyunlar başarıyla listelendi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GameListResponse"
+        "401":
+          description: Kimlik doğrulama başarısız
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
     post:
       tags:
-        - products
-      summary: Yeni ürün ekle
-      description: Sisteme yeni bir ürün ekler
-      operationId: createProduct
+        - Favorites
+      summary: Oyunu favorilere ekle
+      operationId: addFavorite
       security:
-        - bearerAuth: []
+        - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ProductCreate'
+              $ref: "#/components/schemas/FavoriteRequest"
       responses:
-        '201':
-          description: Ürün başarıyla oluşturuldu
+        "201":
+          description: Oyun favorilere başarıyla eklendi
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Product'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-  /products/{productId}:
-    get:
-      tags:
-        - products
-      summary: Ürün detayı
-      description: Belirli bir ürünün detay bilgilerini getirir
-      operationId: getProductById
-      parameters:
-        - $ref: '#/components/parameters/ProductIdParam'
-      responses:
-        '200':
-          description: Başarılı
+                $ref: "#/components/schemas/MessageResponse"
+        "400":
+          description: Geçersiz istek verisi
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Product'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Kimlik doğrulama başarısız
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Oyun zaten favorilerde mevcut
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
-  /orders:
-    get:
+  /favorites/{gameId}:
+    parameters:
+      - name: gameId
+        in: path
+        required: true
+        description: Favorilerden kaldırılacak oyunun kimlik numarası
+        schema:
+          type: string
+        example: "game123"
+    delete:
       tags:
-        - orders
-      summary: Sipariş listesi
-      description: Kullanıcının siparişlerini listeler
-      operationId: listOrders
+        - Favorites
+      summary: Oyunu favorilerden kaldır
+      operationId: removeFavorite
       security:
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/LimitParam'
+        - BearerAuth: []
       responses:
-        '200':
-          description: Başarılı
+        "204":
+          description: Oyun favorilerden başarıyla kaldırıldı
+        "401":
+          description: Kimlik doğrulama başarısız
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OrderList'
-    
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Favori oyun bulunamadı
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /games/{gameId}/comments:
+    parameters:
+      - name: gameId
+        in: path
+        required: true
+        description: Yorum yapılacak oyunun benzersiz kimlik numarası
+        schema:
+          type: string
+        example: "game123"
     post:
       tags:
-        - orders
-      summary: Yeni sipariş oluştur
-      description: Yeni bir sipariş oluşturur
-      operationId: createOrder
+        - Comments
+      summary: Oyun için yorum yap
+      operationId: addComment
       security:
-        - bearerAuth: []
+        - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OrderCreate'
+              $ref: "#/components/schemas/CommentCreateRequest"
       responses:
-        '201':
-          description: Sipariş başarıyla oluşturuldu
+        "201":
+          description: Yorum başarıyla oluşturuldu
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Order'
+                $ref: "#/components/schemas/Comment"
+        "400":
+          description: Geçersiz yorum verisi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Kimlik doğrulama başarısız
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Oyun bulunamadı
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /comments/{commentId}:
+    parameters:
+      - name: commentId
+        in: path
+        required: true
+        description: Yorumun benzersiz kimlik numarası
+        schema:
+          type: string
+        example: "comment123"
+    put:
+      tags:
+        - Comments
+      summary: Yorumu güncelle
+      operationId: updateComment
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommentUpdateRequest"
+      responses:
+        "200":
+          description: Yorum başarıyla güncellendi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Comment"
+        "400":
+          description: Geçersiz yorum verisi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Kimlik doğrulama başarısız
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Bu yorumu güncelleme yetkiniz yok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Yorum bulunamadı
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    delete:
+      tags:
+        - Comments
+      summary: Yorumu sil
+      operationId: deleteComment
+      security:
+        - BearerAuth: []
+      responses:
+        "204":
+          description: Yorum başarıyla silindi
+        "401":
+          description: Kimlik doğrulama başarısız
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Bu yorumu silme yetkiniz yok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Yorum bulunamadı
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /comments/{commentId}/like:
+    parameters:
+      - name: commentId
+        in: path
+        required: true
+        description: Beğenilecek yorumun benzersiz kimlik numarası
+        schema:
+          type: string
+        example: "comment123"
+    post:
+      tags:
+        - Comments
+      summary: Yorumu beğen
+      operationId: likeComment
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Yorum başarıyla beğenildi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "401":
+          description: Kimlik doğrulama başarısız
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Yorum bulunamadı
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Bu yorum zaten beğenildi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
 components:
   securitySchemes:
-    bearerAuth:
+    BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: JWT token ile kimlik doğrulama
-
-  parameters:
-    UserIdParam:
-      name: userId
-      in: path
-      required: true
-      description: Kullanıcı ID'si
-      schema:
-        type: string
-        format: uuid
-    
-    ProductIdParam:
-      name: productId
-      in: path
-      required: true
-      description: Ürün ID'si
-      schema:
-        type: string
-        format: uuid
-    
-    PageParam:
-      name: page
-      in: query
-      description: Sayfa numarası
-      schema:
-        type: integer
-        minimum: 1
-        default: 1
-    
-    LimitParam:
-      name: limit
-      in: query
-      description: Sayfa başına kayıt sayısı
-      schema:
-        type: integer
-        minimum: 1
-        maximum: 100
-        default: 20
+      description: >
+        JWT tabanlı kimlik doğrulama. İstek başlığına
+        "Authorization: Bearer <token>" eklenmelidir.
 
   schemas:
     User:
       type: object
-      required:
-        - id
-        - email
-        - firstName
-        - lastName
-        - role
-        - createdAt
+      description: Kullanıcı bilgilerini temsil eden model
       properties:
         id:
           type: string
-          format: uuid
-          description: Kullanıcı benzersiz kimliği
-          example: "123e4567-e89b-12d3-a456-426614174000"
+          example: "user123"
+        firstName:
+          type: string
+          example: "Sedef"
+        lastName:
+          type: string
+          example: "Arıcan"
         email:
           type: string
           format: email
-          description: Kullanıcı email adresi
           example: "kullanici@example.com"
-        firstName:
-          type: string
-          description: Ad
-          example: "Ahmet"
-        lastName:
-          type: string
-          description: Soyad
-          example: "Yılmaz"
-        role:
-          type: string
-          enum: [admin, user, guest]
-          description: Kullanıcı rolü
-          example: "user"
         createdAt:
           type: string
           format: date-time
-          description: Oluşturulma tarihi
-          example: "2024-01-15T10:30:00Z"
-        updatedAt:
-          type: string
-          format: date-time
-          description: Güncellenme tarihi
-          example: "2024-01-20T14:45:00Z"
-        phone:
-          type: string
-          description: Telefon numarası
-          example: "+905551234567"
-
-    UserRegistration:
-      type: object
+          example: "2026-03-08T12:00:00Z"
       required:
-        - email
-        - password
+        - id
         - firstName
         - lastName
+        - email
+
+    RegisterRequest:
+      type: object
+      description: Kullanıcı kayıt isteği
       properties:
         email:
           type: string
@@ -440,357 +668,253 @@ components:
           example: "kullanici@example.com"
         password:
           type: string
-          format: password
-          minLength: 8
-          example: "Guvenli123!"
+          minLength: 6
+          maxLength: 100
+          example: "ruhi123"
         firstName:
           type: string
           minLength: 2
-          example: "Ahmet"
+          maxLength: 50
+          example: "Sedef"
         lastName:
           type: string
           minLength: 2
-          example: "Yılmaz"
+          maxLength: 50
+          example: "Arıcan"
+      required:
+        - email
+        - password
+        - firstName
+        - lastName
 
-    UserUpdate:
+    LoginRequest:
       type: object
+      description: Kullanıcı giriş isteği
       properties:
-        firstName:
+        email:
           type: string
-          minLength: 2
-          example: "Ahmet"
-        lastName:
+          format: email
+          example: "kullanici@example.com"
+        password:
           type: string
-          minLength: 2
-          example: "Yılmaz"
+          minLength: 6
+          maxLength: 100
+          example: "ruhi123"
+      required:
+        - email
+        - password
+
+    AuthResponse:
+      type: object
+      description: Başarılı kimlik doğrulama sonrası dönen yanıt
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        accessToken:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+      required:
+        - user
+        - accessToken
+
+    ForgotPasswordRequest:
+      type: object
+      description: Şifre sıfırlama talebi isteği
+      properties:
+        email:
+          type: string
+          format: email
+          example: "kullanici@example.com"
+      required:
+        - email
+
+    UpdateUserRequest:
+      type: object
+      description: Kullanıcı profil güncelleme isteği
+      properties:
         email:
           type: string
           format: email
           example: "yeniemail@example.com"
-        phone:
+        password:
           type: string
-          description: Telefon numarası
-          example: "+905551234567"
-
-    LoginCredentials:
-      type: object
+          minLength: 6
+          maxLength: 100
+          example: "ruhi123456"
       required:
         - email
         - password
-      properties:
-        email:
-          type: string
-          format: email
-          example: "kullanici@example.com"
-        password:
-          type: string
-          format: password
-          example: "Guvenli123!"
 
-    AuthToken:
+    Game:
       type: object
-      required:
-        - token
-        - expiresIn
-        - user
+      description: Oyun temel bilgilerini temsil eden model
       properties:
-        token:
+        id:
           type: string
-          description: JWT access token
-          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-        expiresIn:
-          type: integer
-          description: Token geçerlilik süresi (saniye)
-          example: 3600
-        user:
-          $ref: '#/components/schemas/User'
-
-    Product:
-      type: object
+          example: "game123"
+        name:
+          type: string
+          example: "The Witcher 3"
+        price:
+          type: number
+          format: float
+          example: 19.99
+        currency:
+          type: string
+          example: "USD"
+        imageUrl:
+          type: string
+          format: uri
+          example: "https://example.com/images/witcher3.jpg"
       required:
         - id
         - name
         - price
-        - category
-        - stock
+        - currency
+
+    GameDetail:
+      type: object
+      description: Oyun detay bilgilerini temsil eden model
       properties:
         id:
           type: string
-          format: uuid
-          example: "987e6543-e21b-12d3-a456-426614174000"
+          example: "game123"
         name:
           type: string
-          description: Ürün adı
-          example: "Laptop"
+          example: "The Witcher 3"
         description:
           type: string
-          description: Ürün açıklaması
-          example: "15.6 inç, 16GB RAM, 512GB SSD"
+          example: "Açık dünya aksiyon rol yapma oyunu."
         price:
           type: number
           format: float
-          description: Ürün fiyatı (TL)
-          example: 25999.99
-        category:
+          example: 19.99
+        currency:
           type: string
-          description: Ürün kategorisi
-          example: "Elektronik"
-        stock:
-          type: integer
-          description: Stok miktarı
-          example: 50
+          example: "USD"
         imageUrl:
           type: string
           format: uri
-          description: Ürün görseli URL'i
-          example: "https://example.com/images/laptop.jpg"
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-
-    ProductCreate:
-      type: object
-      required:
-        - name
-        - price
-        - category
-        - stock
-      properties:
-        name:
-          type: string
-          minLength: 3
-        description:
-          type: string
-        price:
-          type: number
-          format: float
-          minimum: 0
-        category:
-          type: string
-        stock:
+          example: "https://example.com/images/witcher3.jpg"
+        commentCount:
           type: integer
-          minimum: 0
-        imageUrl:
-          type: string
-          format: uri
-
-    Order:
-      type: object
+          example: 32
+        favoriteCount:
+          type: integer
+          example: 125
       required:
         - id
-        - userId
-        - items
-        - totalAmount
-        - status
-        - createdAt
+        - name
+        - description
+        - price
+        - currency
+
+    FavoriteRequest:
+      type: object
+      description: Favorilere ekleme isteği
+      properties:
+        gameId:
+          type: string
+          example: "12345"
+      required:
+        - gameId
+
+    Comment:
+      type: object
+      description: Yorum bilgilerini temsil eden model
       properties:
         id:
           type: string
-          format: uuid
+          example: "comment123"
+        gameId:
+          type: string
+          example: "game123"
         userId:
           type: string
-          format: uuid
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/OrderItem'
-        totalAmount:
-          type: number
-          format: float
-          description: Toplam tutar (TL)
-        status:
+          example: "user123"
+        content:
           type: string
-          enum: [pending, processing, shipped, delivered, cancelled]
-          description: Sipariş durumu
-        shippingAddress:
-          $ref: '#/components/schemas/Address'
+          example: "Bu oyun gerçekten çok başarılı ve keyifli."
         createdAt:
           type: string
           format: date-time
+          example: "2026-03-08T14:30:00Z"
         updatedAt:
           type: string
           format: date-time
-
-    OrderCreate:
-      type: object
+          example: "2026-03-08T15:00:00Z"
       required:
-        - items
-        - shippingAddress
-      properties:
-        items:
-          type: array
-          minItems: 1
-          items:
-            type: object
-            required:
-              - productId
-              - quantity
-            properties:
-              productId:
-                type: string
-                format: uuid
-              quantity:
-                type: integer
-                minimum: 1
-        shippingAddress:
-          $ref: '#/components/schemas/Address'
+        - id
+        - gameId
+        - userId
+        - content
+        - createdAt
 
-    OrderItem:
+    CommentCreateRequest:
       type: object
+      description: Yorum oluşturma isteği
       properties:
-        productId:
+        content:
           type: string
-          format: uuid
-        productName:
-          type: string
-        quantity:
-          type: integer
-        unitPrice:
-          type: number
-          format: float
-        totalPrice:
-          type: number
-          format: float
-
-    Address:
-      type: object
+          minLength: 1
+          maxLength: 500
+          example: "Bu oyun gerçekten çok başarılı ve keyifli."
       required:
-        - street
-        - city
-        - postalCode
-        - country
-      properties:
-        street:
-          type: string
-          example: "Atatürk Caddesi No:123"
-        city:
-          type: string
-          example: "İstanbul"
-        postalCode:
-          type: string
-          example: "34000"
-        country:
-          type: string
-          example: "Türkiye"
+        - content
 
-    UserList:
+    CommentUpdateRequest:
       type: object
+      description: Yorum güncelleme isteği
       properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/User'
-        pagination:
-          $ref: '#/components/schemas/Pagination'
+        content:
+          type: string
+          minLength: 1
+          maxLength: 500
+          example: "Yorumumu güncelledim, oyun hâlâ oldukça başarılı."
+      required:
+        - content
 
-    ProductList:
+    MessageResponse:
       type: object
+      description: Başarılı işlemler için standart mesaj yanıtı
       properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/Product'
-        pagination:
-          $ref: '#/components/schemas/Pagination'
+        message:
+          type: string
+          example: "İşlem başarılı."
+      required:
+        - message
 
-    OrderList:
+    ErrorResponse:
       type: object
+      description: Hata durumlarında döndürülen standart yanıt
       properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/Order'
-        pagination:
-          $ref: '#/components/schemas/Pagination'
+        message:
+          type: string
+          example: "Geçersiz istek."
+      required:
+        - message
 
-    Pagination:
+    GameListResponse:
       type: object
+      description: Oyun listeleme işlemleri için dönen sayfalı yanıt
       properties:
         page:
           type: integer
-          description: Mevcut sayfa
           example: 1
         limit:
           type: integer
-          description: Sayfa başına kayıt
-          example: 20
-        totalPages:
+          example: 10
+        total:
           type: integer
-          description: Toplam sayfa sayısı
-          example: 5
-        totalItems:
-          type: integer
-          description: Toplam kayıt sayısı
-          example: 95
-
-    Error:
-      type: object
-      required:
-        - code
-        - message
-      properties:
-        code:
-          type: string
-          description: Hata kodu
-          example: "VALIDATION_ERROR"
-        message:
-          type: string
-          description: Hata mesajı
-          example: "Geçersiz email adresi"
-        details:
+          example: 100
+        items:
           type: array
-          description: Detaylı hata bilgileri
           items:
-            type: object
-            properties:
-              field:
-                type: string
-                example: "email"
-              message:
-                type: string
-                example: "Email formatı geçersiz"
+            $ref: "#/components/schemas/Game"
+      required:
+        - page
+        - limit
+        - total
+        - items
 
-  responses:
-    BadRequest:
-      description: Geçersiz istek
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-          example:
-            code: "BAD_REQUEST"
-            message: "İstek parametreleri geçersiz"
-    
-    Unauthorized:
-      description: Yetkisiz erişim
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-          example:
-            code: "UNAUTHORIZED"
-            message: "Kimlik doğrulama başarısız"
-    
-    NotFound:
-      description: Kaynak bulunamadı
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-          example:
-            code: "NOT_FOUND"
-            message: "İstenen kaynak bulunamadı"
-    
-    Forbidden:
-      description: Erişim reddedildi
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-          example:
-            code: "FORBIDDEN"
-            message: "Bu işlem için yetkiniz bulunmamaktadır"
-``
+```
