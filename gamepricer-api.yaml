@@ -1,0 +1,909 @@
+openapi: 3.0.3
+
+info:
+  title: GamePricer API
+  version: 1.0.0
+  description: >
+    GamePricer API, popüler oyunları listelemek, oyun detaylarını görüntülemek,
+    oyun aramak, kullanıcı hesap işlemlerini yönetmek, favori listesi oluşturmak
+    ve oyunlara yorum yapılmasını sağlamak amacıyla tasarlanmış bir RESTful servistir.
+    API, JWT tabanlı kimlik doğrulama mekanizmasını desteklemektedir.
+  contact:
+    name: Sedef Arıcan
+    email: l2211012035@ogr.sdu.edu.tr
+
+# Not: Aşağıdaki sunucu adresleri örnek olarak eklenmiştir, proje tamamlandığında güncellenecektir.
+servers:
+  - url: https://api.gamepricer.com
+    description: Üretim sunucusu (Production)
+  - url: https://staging-api.gamepricer.com
+    description: Test sunucusu (Staging)
+  - url: http://localhost:3000
+    description: Yerel geliştirme sunucusu (Development)
+
+tags:
+  - name: Auth
+    description: Kayıt, giriş, çıkış ve şifre işlemleri
+  - name: Games
+    description: Oyun listeleme, arama ve oyun detay işlemleri
+  - name: Favorites
+    description: Kullanıcının favori oyunlarını yönetme işlemleri
+  - name: Comments
+    description: Oyun yorumları ve yorum beğeni işlemleri
+  - name: Users
+    description: Kullanıcı profil yönetimi işlemleri
+
+paths:
+  /games/popular:
+    get:
+      tags:
+        - Games
+      summary: Popüler oyunları listele
+      operationId: listPopularGames
+      parameters:
+        - name: page
+          in: query
+          required: false
+          description: Sayfa numarası
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          example: 1
+        - name: limit
+          in: query
+          required: false
+          description: Sayfa başına görüntülenecek oyun sayısı
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+          example: 10
+      responses:
+        "200":
+          description: Popüler oyunlar başarıyla listelendi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GameListResponse"
+        "400":
+          description: Geçersiz sorgu parametreleri
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /games/{gameId}:
+    parameters:
+      - name: gameId
+        in: path
+        required: true
+        description: Oyunun benzersiz kimlik numarası
+        schema:
+          type: string
+        example: "game123"
+    get:
+      tags:
+        - Games
+      summary: Oyun detayını getir
+      operationId: getGameDetail
+      responses:
+        "200":
+          description: Oyun detayı başarıyla getirildi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GameDetail"
+        "404":
+          description: Oyun bulunamadı
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /games/search:
+    get:
+      tags:
+        - Games
+      summary: Oyun ara
+      operationId: searchGames
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: Arama metni
+          schema:
+            type: string
+            minLength: 1
+          example: "witcher"
+        - name: page
+          in: query
+          required: false
+          description: Sayfa numarası
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          example: 1
+        - name: limit
+          in: query
+          required: false
+          description: Sayfa başına sonuç sayısı
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+          example: 10
+      responses:
+        "200":
+          description: Arama sonuçları başarıyla listelendi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GameListResponse"
+        "400":
+          description: Geçersiz arama parametreleri
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/register:
+    post:
+      tags:
+        - Auth
+      summary: Üye ol
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: Kullanıcı başarıyla oluşturuldu
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Geçersiz kayıt bilgileri
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Email zaten kullanımda
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Giriş yap
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Giriş başarılı
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Geçersiz giriş isteği
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Email veya şifre hatalı
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/forgot-password:
+    post:
+      tags:
+        - Auth
+      summary: Şifre sıfırlama talebi oluştur
+      operationId: forgotPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ForgotPasswordRequest"
+      responses:
+        "200":
+          description: Şifre sıfırlama bağlantısı başarıyla gönderildi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "400":
+          description: Geçersiz email bilgisi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      tags:
+        - Auth
+      summary: Çıkış yap
+      operationId: logoutUser
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Çıkış işlemi başarılı
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "401":
+          description: Kimlik doğrulama başarısız
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /users/{userId}:
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        description: Kullanıcının benzersiz kimlik numarası
+        schema:
+          type: string
+        example: "user123"
+    put:
+      tags:
+        - Users
+      summary: Kullanıcı hesabını güncelle
+      operationId: updateUser
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserRequest"
+      responses:
+        "200":
+          description: Kullanıcı bilgileri başarıyla güncellendi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: Geçersiz güncelleme verisi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Kimlik doğrulama başarısız
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Bu kullanıcıyı güncelleme yetkiniz yok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Kullanıcı bulunamadı
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    delete:
+      tags:
+        - Users
+      summary: Kullanıcı hesabını sil
+      operationId: deleteUser
+      security:
+        - BearerAuth: []
+      responses:
+        "204":
+          description: Kullanıcı hesabı başarıyla silindi
+        "401":
+          description: Kimlik doğrulama başarısız
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Bu kullanıcıyı silme yetkiniz yok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Kullanıcı bulunamadı
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /favorites:
+    get:
+      tags:
+        - Favorites
+      summary: Favorileri listele
+      operationId: listFavorites
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Favori oyunlar başarıyla listelendi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GameListResponse"
+        "401":
+          description: Kimlik doğrulama başarısız
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    post:
+      tags:
+        - Favorites
+      summary: Oyunu favorilere ekle
+      operationId: addFavorite
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FavoriteRequest"
+      responses:
+        "201":
+          description: Oyun favorilere başarıyla eklendi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "400":
+          description: Geçersiz istek verisi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Kimlik doğrulama başarısız
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Oyun zaten favorilerde mevcut
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /favorites/{gameId}:
+    parameters:
+      - name: gameId
+        in: path
+        required: true
+        description: Favorilerden kaldırılacak oyunun kimlik numarası
+        schema:
+          type: string
+        example: "game123"
+    delete:
+      tags:
+        - Favorites
+      summary: Oyunu favorilerden kaldır
+      operationId: removeFavorite
+      security:
+        - BearerAuth: []
+      responses:
+        "204":
+          description: Oyun favorilerden başarıyla kaldırıldı
+        "401":
+          description: Kimlik doğrulama başarısız
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Favori oyun bulunamadı
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /games/{gameId}/comments:
+    parameters:
+      - name: gameId
+        in: path
+        required: true
+        description: Yorum yapılacak oyunun benzersiz kimlik numarası
+        schema:
+          type: string
+        example: "game123"
+    post:
+      tags:
+        - Comments
+      summary: Oyun için yorum yap
+      operationId: addComment
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommentCreateRequest"
+      responses:
+        "201":
+          description: Yorum başarıyla oluşturuldu
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Comment"
+        "400":
+          description: Geçersiz yorum verisi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Kimlik doğrulama başarısız
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Oyun bulunamadı
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /comments/{commentId}:
+    parameters:
+      - name: commentId
+        in: path
+        required: true
+        description: Yorumun benzersiz kimlik numarası
+        schema:
+          type: string
+        example: "comment123"
+    put:
+      tags:
+        - Comments
+      summary: Yorumu güncelle
+      operationId: updateComment
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommentUpdateRequest"
+      responses:
+        "200":
+          description: Yorum başarıyla güncellendi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Comment"
+        "400":
+          description: Geçersiz yorum verisi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Kimlik doğrulama başarısız
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Bu yorumu güncelleme yetkiniz yok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Yorum bulunamadı
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    delete:
+      tags:
+        - Comments
+      summary: Yorumu sil
+      operationId: deleteComment
+      security:
+        - BearerAuth: []
+      responses:
+        "204":
+          description: Yorum başarıyla silindi
+        "401":
+          description: Kimlik doğrulama başarısız
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Bu yorumu silme yetkiniz yok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Yorum bulunamadı
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /comments/{commentId}/like:
+    parameters:
+      - name: commentId
+        in: path
+        required: true
+        description: Beğenilecek yorumun benzersiz kimlik numarası
+        schema:
+          type: string
+        example: "comment123"
+    post:
+      tags:
+        - Comments
+      summary: Yorumu beğen
+      operationId: likeComment
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Yorum başarıyla beğenildi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "401":
+          description: Kimlik doğrulama başarısız
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Yorum bulunamadı
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Bu yorum zaten beğenildi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: >
+        JWT tabanlı kimlik doğrulama. İstek başlığına
+        "Authorization: Bearer <token>" eklenmelidir.
+
+  schemas:
+    User:
+      type: object
+      description: Kullanıcı bilgilerini temsil eden model
+      properties:
+        id:
+          type: string
+          example: "user123"
+        firstName:
+          type: string
+          example: "Sedef"
+        lastName:
+          type: string
+          example: "Arıcan"
+        email:
+          type: string
+          format: email
+          example: "kullanici@example.com"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-03-08T12:00:00Z"
+      required:
+        - id
+        - firstName
+        - lastName
+        - email
+
+    RegisterRequest:
+      type: object
+      description: Kullanıcı kayıt isteği
+      properties:
+        email:
+          type: string
+          format: email
+          example: "kullanici@example.com"
+        password:
+          type: string
+          minLength: 6
+          maxLength: 100
+          example: "ruhi123"
+        firstName:
+          type: string
+          minLength: 2
+          maxLength: 50
+          example: "Sedef"
+        lastName:
+          type: string
+          minLength: 2
+          maxLength: 50
+          example: "Arıcan"
+      required:
+        - email
+        - password
+        - firstName
+        - lastName
+
+    LoginRequest:
+      type: object
+      description: Kullanıcı giriş isteği
+      properties:
+        email:
+          type: string
+          format: email
+          example: "kullanici@example.com"
+        password:
+          type: string
+          minLength: 6
+          maxLength: 100
+          example: "ruhi123"
+      required:
+        - email
+        - password
+
+    AuthResponse:
+      type: object
+      description: Başarılı kimlik doğrulama sonrası dönen yanıt
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        accessToken:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+      required:
+        - user
+        - accessToken
+
+    ForgotPasswordRequest:
+      type: object
+      description: Şifre sıfırlama talebi isteği
+      properties:
+        email:
+          type: string
+          format: email
+          example: "kullanici@example.com"
+      required:
+        - email
+
+    UpdateUserRequest:
+      type: object
+      description: Kullanıcı profil güncelleme isteği
+      properties:
+        email:
+          type: string
+          format: email
+          example: "yeniemail@example.com"
+        password:
+          type: string
+          minLength: 6
+          maxLength: 100
+          example: "ruhi123456"
+      required:
+        - email
+        - password
+
+    Game:
+      type: object
+      description: Oyun temel bilgilerini temsil eden model
+      properties:
+        id:
+          type: string
+          example: "game123"
+        name:
+          type: string
+          example: "The Witcher 3"
+        price:
+          type: number
+          format: float
+          example: 19.99
+        currency:
+          type: string
+          example: "USD"
+        imageUrl:
+          type: string
+          format: uri
+          example: "https://example.com/images/witcher3.jpg"
+      required:
+        - id
+        - name
+        - price
+        - currency
+
+    GameDetail:
+      type: object
+      description: Oyun detay bilgilerini temsil eden model
+      properties:
+        id:
+          type: string
+          example: "game123"
+        name:
+          type: string
+          example: "The Witcher 3"
+        description:
+          type: string
+          example: "Açık dünya aksiyon rol yapma oyunu."
+        price:
+          type: number
+          format: float
+          example: 19.99
+        currency:
+          type: string
+          example: "USD"
+        imageUrl:
+          type: string
+          format: uri
+          example: "https://example.com/images/witcher3.jpg"
+        commentCount:
+          type: integer
+          example: 32
+        favoriteCount:
+          type: integer
+          example: 125
+      required:
+        - id
+        - name
+        - description
+        - price
+        - currency
+
+    FavoriteRequest:
+      type: object
+      description: Favorilere ekleme isteği
+      properties:
+        gameId:
+          type: string
+          example: "12345"
+      required:
+        - gameId
+
+    Comment:
+      type: object
+      description: Yorum bilgilerini temsil eden model
+      properties:
+        id:
+          type: string
+          example: "comment123"
+        gameId:
+          type: string
+          example: "game123"
+        userId:
+          type: string
+          example: "user123"
+        content:
+          type: string
+          example: "Bu oyun gerçekten çok başarılı ve keyifli."
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-03-08T14:30:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2026-03-08T15:00:00Z"
+      required:
+        - id
+        - gameId
+        - userId
+        - content
+        - createdAt
+
+    CommentCreateRequest:
+      type: object
+      description: Yorum oluşturma isteği
+      properties:
+        content:
+          type: string
+          minLength: 1
+          maxLength: 500
+          example: "Bu oyun gerçekten çok başarılı ve keyifli."
+      required:
+        - content
+
+    CommentUpdateRequest:
+      type: object
+      description: Yorum güncelleme isteği
+      properties:
+        content:
+          type: string
+          minLength: 1
+          maxLength: 500
+          example: "Yorumumu güncelledim, oyun hâlâ oldukça başarılı."
+      required:
+        - content
+
+    MessageResponse:
+      type: object
+      description: Başarılı işlemler için standart mesaj yanıtı
+      properties:
+        message:
+          type: string
+          example: "İşlem başarılı."
+      required:
+        - message
+
+    ErrorResponse:
+      type: object
+      description: Hata durumlarında döndürülen standart yanıt
+      properties:
+        message:
+          type: string
+          example: "Geçersiz istek."
+      required:
+        - message
+
+    GameListResponse:
+      type: object
+      description: Oyun listeleme işlemleri için dönen sayfalı yanıt
+      properties:
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 10
+        total:
+          type: integer
+          example: 100
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Game"
+      required:
+        - page
+        - limit
+        - total
+        - items
