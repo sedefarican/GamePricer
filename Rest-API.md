@@ -1,8 +1,12 @@
 # GamePricer REST API Metotları
 
+<br>
+
 **REST API Adresi:** [Link daha sonra buraya eklenecek](https://example.com)
 
 **API Test Videosu:** [Link daha sonra buraya eklenecek](https://example.com)
+
+<br>
 
 ## 1. Ana Sayfada Popüler Oyunları Listeleme
 - **Endpoint:** `GET /games/popular`
@@ -22,7 +26,7 @@
 ## 3. Üye Olma
 - **Endpoint:** `POST /auth/register`
 - **Request Body:**
-```json
+  ```json
   {
     "email": "kullanici@example.com",
     "password": "ruhi123",
@@ -61,11 +65,11 @@
 ```json
 {
   "email": "yeniemail@example.com",
-  "username": "yenikullaniciadi"
+  "username": "yenikullaniciadi",
   "password": "ruhi123456"
 }
   ```
-- **Authentication:** -  Bearer Token gerekli
+- **Authentication:** Bearer Token gerekli
 - **Response:** `200 OK` - Kullanıcı bilgileri başarıyla güncellendi
 
 ## 7. Hesabı Silme
@@ -86,26 +90,33 @@
   - `q` (string, required) - Aranacak oyun adı
   - `page` (integer, optional) - Sayfa numarası
   - `limit` (integer, optional) - Sayfa başına gösterilecek sonuç sayısı
-- **Response:** `200 OK` - Oyunlar başarıyla listelendi
+- **Authentication:** Gerekli değil
+- **Response:** `200 OK` - Arama sonuçları başarıyla listelendi
 
-## 10. Favorilere Ekle
+## 10. Favorilere Ekleme
 - **Endpoint:** `POST /favorites`
 - **Request Body:** 
   ```json
   {
     "gameId": "12345"
   }
+  ```
 - **Authentication:** Bearer Token gerekli
 - **Response:** `201 Created` - Oyun favorilere başarıyla eklendi
 
-## 11. Favorilerden Kaldır
+## 11. Favorilerden Kaldırma
 - **Endpoint:** `DELETE /favorites/{gameId}`
 - **Path Parameters:** 
   - `gameId` (string, required) - Favorilerden kaldırılacak oyun ID'si
 - **Authentication:** Bearer Token gerekli
 - **Response:** `204 No Content` - Oyun favorilerden başarıyla kaldırıldı
 
-## 13. Yorum Yap
+## 12. Favorileri Listeleme
+- **Endpoint:** `GET /favorites`
+- **Authentication:** Bearer Token gerekli
+- **Response:** `200 OK` - Favori oyunlar başarıyla listelendi
+
+## 13. Yorum Yapma
 - **Endpoint:** `POST /games/{gameId}/comments`
 - **Path Parameters:** 
   - `gameId` (string, required) - Yorum yapılacak oyun ID'si
@@ -114,10 +125,11 @@
   {
     "content": "Bu oyun gerçekten çok başarılı ve keyifli."
   }
+  ```
 - **Authentication:** Bearer Token gerekli  
 - **Response:** `201 Created` - Yorum başarıyla oluşturuldu
 
-## 14. Yorum Sil
+## 14. Yorum Silme
 - **Endpoint:** `DELETE /comments/{commentId}`
 - **Path Parameters:** 
   - `commentId` (string, required) - Silinecek yorum ID'si
@@ -133,6 +145,7 @@
   {
     "content": "Yorumumu güncelledim, oyun hâlâ oldukça başarılı."
   }
+  ```
 - **Authentication:** Bearer Token gerekli
 - **Response:** `200 OK` - Yorum başarıyla güncellendi
 
