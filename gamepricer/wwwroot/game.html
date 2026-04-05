@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Oyun detayı — GamePricer</title>
+  <link rel="stylesheet" href="css/site.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="logo" href="index.html">
+        <img class="logo-mark" src="images/logo.png" width="36" height="36" alt="" decoding="async" />
+        <span class="logo-text">GamePricer</span>
+      </a>
+      <nav class="nav-main" aria-label="Ana menü">
+        <a href="index.html">Oyun fiyatları</a>
+        <a href="index.html#deals">Fırsat köşesi</a>
+      </nav>
+      <div class="search-wrap">
+        <form class="search-form" action="index.html" method="get" role="search">
+          <label class="sr-only" for="q">Oyun ara</label>
+          <input id="q" class="search-input" type="search" name="q" placeholder="Ana sayfada ara…" />
+          <button type="submit" class="btn btn-primary">Ara</button>
+        </form>
+      </div>
+      <div class="header-actions">
+        <span id="authGuest">
+          <button type="button" class="btn btn-ghost" id="btnLogin">Giriş</button>
+          <button type="button" class="btn btn-primary" id="btnRegister">Kayıt ol</button>
+        </span>
+        <span id="authUser" hidden>
+          <div class="user-menu-wrap" id="userMenuWrap">
+            <button
+              type="button"
+              class="user-menu-trigger"
+              id="btnUserMenu"
+              aria-expanded="false"
+              aria-haspopup="true"
+              aria-controls="userMenuDropdown"
+            >
+              <span id="authUsername"></span>
+              <svg class="user-menu-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </button>
+            <div class="user-menu-dropdown" id="userMenuDropdown" role="menu">
+              <button type="button" class="user-menu-item" role="menuitem" id="menuEditProfile">
+                Kullanıcı bilgileri düzenleme
+              </button>
+              <button type="button" class="user-menu-item user-menu-item--danger" role="menuitem" id="menuDeleteAccount">
+                Hesap silme
+              </button>
+            </div>
+          </div>
+          <button type="button" class="btn btn-ghost" id="btnLogout">Çıkış</button>
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div id="detailRoot"></div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      Fiyatlar bilgilendirme amaçlıdır; satın almadan önce mağaza sitesini kontrol edin.
+    </div>
+  </footer>
+
+  <div id="modalLogin" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
+    <div class="modal modal-wrap">
+      <button type="button" class="modal-close" data-close-modal="#modalLogin" aria-label="Kapat">×</button>
+      <h3 id="loginTitle">Giriş yap</h3>
+      <form id="formLogin">
+        <div class="field">
+          <label for="loginUser">E-posta veya kullanıcı adı</label>
+          <input id="loginUser" required autocomplete="username" />
+        </div>
+        <div class="field">
+          <label for="loginPass">Şifre</label>
+          <input id="loginPass" type="password" required autocomplete="current-password" />
+        </div>
+        <p class="login-forgot-wrap">
+          <button type="button" class="link-like" id="btnOpenForgotPassword">Şifremi unuttum</button>
+        </p>
+        <p id="loginFlash" class="flash-msg"></p>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" data-close-modal="#modalLogin">Vazgeç</button>
+          <button type="submit" class="btn btn-primary">Giriş</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="modalForgotPassword" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="forgotTitle">
+    <div class="modal modal-wrap">
+      <button type="button" class="modal-close" data-close-modal="#modalForgotPassword" aria-label="Kapat">×</button>
+      <h3 id="forgotTitle">Şifremi unuttum</h3>
+      <p class="modal-hint-muted">Kayıtlı e-posta adresinizi girin; sistem şifre sıfırlama adımını başlatır.</p>
+      <form id="formForgotPassword">
+        <div class="field">
+          <label for="forgotEmail">E-posta</label>
+          <input id="forgotEmail" type="email" required autocomplete="email" />
+        </div>
+        <p id="forgotFlash" class="flash-msg"></p>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" id="btnForgotBackLogin">Girişe dön</button>
+          <button type="submit" class="btn btn-primary">Gönder</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="modalEditProfile" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="editProfileTitle">
+    <div class="modal modal-wrap">
+      <button type="button" class="modal-close" data-close-modal="#modalEditProfile" aria-label="Kapat">×</button>
+      <h3 id="editProfileTitle">Kullanıcı bilgileri</h3>
+      <form id="formEditProfile">
+        <div class="field">
+          <label for="editEmail">E-posta</label>
+          <input id="editEmail" type="email" required autocomplete="email" />
+        </div>
+        <div class="field">
+          <label for="editUsername">Kullanıcı adı</label>
+          <input id="editUsername" required maxlength="30" autocomplete="username" />
+        </div>
+        <div class="field">
+          <label for="editPassword">Yeni şifre (isteğe bağlı)</label>
+          <input id="editPassword" type="password" minlength="6" autocomplete="new-password" placeholder="Boş bırakırsanız değişmez" />
+        </div>
+        <p id="editProfileFlash" class="flash-msg"></p>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" data-close-modal="#modalEditProfile">Vazgeç</button>
+          <button type="submit" class="btn btn-primary">Kaydet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="modalDeleteAccount" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="deleteAccountTitle">
+    <div class="modal modal-wrap">
+      <button type="button" class="modal-close" data-close-modal="#modalDeleteAccount" aria-label="Kapat">×</button>
+      <h3 id="deleteAccountTitle">Hesabı sil</h3>
+      <p class="delete-account-warning">
+        Hesabınız kalıcı olarak devre dışı bırakılır. Bu işlem geri alınamaz. Devam etmek istediğinize emin misiniz?
+      </p>
+      <p id="deleteAccountFlash" class="flash-msg"></p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close-modal="#modalDeleteAccount">Vazgeç</button>
+        <button type="button" class="btn btn-primary" id="btnConfirmDeleteAccount" style="background: linear-gradient(135deg, #991b1b, #dc2626); box-shadow: 0 4px 14px rgba(220, 38, 38, 0.35);">
+          Hesabı sil
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modalRegister" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="regTitle">
+    <div class="modal modal-wrap">
+      <button type="button" class="modal-close" data-close-modal="#modalRegister" aria-label="Kapat">×</button>
+      <h3 id="regTitle">Kayıt ol</h3>
+      <form id="formRegister">
+        <div class="field">
+          <label for="regFirst">Ad</label>
+          <input id="regFirst" required maxlength="50" autocomplete="given-name" />
+        </div>
+        <div class="field">
+          <label for="regLast">Soyad</label>
+          <input id="regLast" required maxlength="50" autocomplete="family-name" />
+        </div>
+        <div class="field">
+          <label for="regUser">Kullanıcı adı</label>
+          <input id="regUser" required maxlength="30" autocomplete="username" />
+        </div>
+        <div class="field">
+          <label for="regEmail">E-posta</label>
+          <input id="regEmail" type="email" required autocomplete="email" />
+        </div>
+        <div class="field">
+          <label for="regPass">Şifre (min. 6)</label>
+          <input id="regPass" type="password" required minlength="6" autocomplete="new-password" />
+        </div>
+        <p id="registerFlash" class="flash-msg"></p>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" data-close-modal="#modalRegister">Vazgeç</button>
+          <button type="submit" class="btn btn-primary">Kayıt ol</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/api.js?v=2"></script>
+  <script src="js/auth-ui.js"></script>
+  <script src="js/game-detail.js?v=3"></script>
+</body>
+</html>
