@@ -2,7 +2,7 @@
 
 <br>
 
-**REST API Adresi:** [gamepricer.net](https://gamepricer.net/)
+**REST API Adresi:** https://gamepricer.net/swagger/index.html
 
 **API Test Videosu:** [Video linki](https://youtu.be/-ahKVJXhZWI)
 
